@@ -1,0 +1,21 @@
+https://raw.githubusercontent.com/romain09/AWS-RDP/main/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+        Invoke-WebRequest https://raw.githubusercontent.com/romain09/AWS-RDP/main/start.bat -OutFile start.bat
+    - name: Extraindo arquivos Ngrok.
+      executar: Expand-Archive ngrok.zip
+    - nome: Conectando-se à sua conta Ngrok.
+      execute:. \ ngrok \ ngrok.exe authtoken $ Env: NGROK_AUTH_TOKEN
+      env:
+        NGROK_AUTH_TOKEN: $ {{secrets.NGROK_AUTH_TOKEN}}
+    - nome: Ativando o acesso RDP.
+      correr: | 
+        Set-ItemProperty -Path 'HKLM: \ System \ CurrentControlSet \ Control \ Terminal Server'-name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Área de Trabalho Remota"
+        Set-ItemProperty -Path 'HKLM: \ System \ CurrentControlSet \ Control \ Terminal Server \ WinStations \ RDP-Tcp' -name "UserAuthentication" -Value 1
+    - nome: Criando Túnel.
+      execute: Start-Process Powershell -ArgumentList '-Noexit -Command ". \ ngrok \ ngrok.exe tcp 3389"'
+    - nome: Conectando ao seu RDP.
+      execute: cmd / c start.bat
+    - nome: RDP está pronto!
+      correr: | 
+        Invoke-WebRequest https://raw.githubusercontent.com/romain09/AWS-RDP/main/loop.ps1 -OutFile loop.ps1
+        ./loop.ps1
